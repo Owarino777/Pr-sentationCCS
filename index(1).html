@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DFS — Malik Cheikh · Projection à 5 ans</title>
+  <style>
+    :root {
+      --sky-1: #80d7ff;
+      --sky-2: #dff6ff;
+      --grass-1: #84df65;
+      --grass-2: #4cb64a;
+      --ink: #1e2432;
+      --panel: rgba(255,255,255,0.88);
+      --panel-strong: rgba(255,255,255,0.96);
+      --shadow: 0 28px 60px rgba(20, 24, 39, 0.18);
+      --red: #ee5148;
+      --gold: #f8bb2d;
+      --green: #56be56;
+      --blue: #4f8cff;
+      --purple: #8d6cff;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --transition: 480ms cubic-bezier(.2,.7,.1,1);
+      --map-width: 2600px;
+      --map-height: 980px;
+      --node-size: 58px;
+      --safe-width: min(100vw - 32px, 1600px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+      color: var(--ink);
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--sky-2), var(--sky-1));
+    }
+
+    body.theme-meadow {
+      --sky-1: #8ed7ff;
+      --sky-2: #eefbff;
+      --grass-1: #90e776;
+      --grass-2: #48be4b;
+    }
+
+    body.theme-desert {
+      --sky-1: #ffd35a;
+      --sky-2: #fff1bb;
+      --grass-1: #f0cb5f;
+      --grass-2: #d89f30;
+    }
+
+    body.theme-snow {
+      --sky-1: #8cc1ff;
+      --sky-2: #eef7ff;
+      --grass-1: #dceeff;
+      --grass-2: #bfdcff;
+    }
+
+    body.theme-ruins {
+      --sky-1: #8edbd7;
+      --sky-2: #eefdfa;
+      --grass-1: #cdc8b9;
+      --grass-2: #aaa38f;
+    }
+
+    body.theme-finale {
+      --sky-1: #6ea4ff;
+      --sky-2: #e9f2ff;
+      --grass-1: #9edb7f;
+      --grass-2: #63b657;
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--sky-2), var(--sky-1));
+      transition: background var(--transition);
+    }
+
+    .sun {
+      position: absolute;
+      top: 58px;
+      right: 10%;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,230,132,0.9) 44%, rgba(255,204,91,0.55) 66%, rgba(255,255,255,0) 70%);
+      filter: blur(1px);
+      opacity: 0.95;
+      transition: transform 800ms ease, opacity 500ms ease;
+    }
+
+    body.theme-snow .sun,
+    body.theme-finale .sun {
+      top: 84px;
+      right: 12%;
+      opacity: 0.72;
+    }
+
+    .clouds,
+    .far-hills,
+    .near-hills {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 220px;
+      height: 68px;
+      background: rgba(255,255,255,0.88);
+      border-radius: 999px;
+      box-shadow: 60px -18px 0 14px rgba(255,255,255,0.84), 130px -4px 0 8px rgba(255,255,255,0.82);
+      opacity: 0.95;
+      animation: drift linear infinite;
+    }
+
+    .cloud.c1 { top: 8%; left: -12%; animation-duration: 42s; }
+    .cloud.c2 { top: 18%; left: 14%; transform: scale(0.78); animation-duration: 51s; }
+    .cloud.c3 { top: 11%; left: 58%; transform: scale(0.92); animation-duration: 46s; }
+    .cloud.c4 { top: 23%; left: 78%; transform: scale(0.64); animation-duration: 55s; }
+
+    @keyframes drift {
+      from { transform: translateX(0) scale(var(--scale, 1)); }
+      to { transform: translateX(18vw) scale(var(--scale, 1)); }
+    }
+
+    .far-hills::before,
+    .far-hills::after,
+    .near-hills::before,
+    .near-hills::after {
+      content: "";
+      position: absolute;
+      left: -5%;
+      right: -5%;
+      border-radius: 48% 52% 0 0 / 100% 100% 0 0;
+    }
+
+    .far-hills::before {
+      bottom: 235px;
+      height: 260px;
+      background: linear-gradient(180deg, rgba(175,232,131,0.85), rgba(135,211,95,0.95));
+      clip-path: polygon(0 100%, 0 44%, 12% 28%, 22% 48%, 36% 18%, 51% 52%, 64% 21%, 78% 46%, 90% 24%, 100% 55%, 100% 100%);
+    }
+
+    .far-hills::after {
+      bottom: 188px;
+      height: 220px;
+      background: linear-gradient(180deg, rgba(136,220,120,0.95), rgba(94,188,78,1));
+      clip-path: polygon(0 100%, 0 49%, 10% 23%, 20% 43%, 34% 21%, 50% 51%, 62% 24%, 76% 46%, 88% 18%, 100% 53%, 100% 100%);
+    }
+
+    .near-hills::before {
+      bottom: 128px;
+      height: 220px;
+      background: linear-gradient(180deg, var(--grass-1), var(--grass-2));
+      clip-path: polygon(0 100%, 0 59%, 9% 43%, 20% 61%, 32% 33%, 46% 60%, 59% 41%, 70% 63%, 85% 35%, 100% 57%, 100% 100%);
+      transition: background var(--transition);
+    }
+
+    .near-hills::after {
+      bottom: -22px;
+      height: 220px;
+      background: linear-gradient(180deg, #69c758, #49a940);
+      clip-path: polygon(0 100%, 0 45%, 12% 69%, 24% 44%, 38% 72%, 50% 36%, 63% 67%, 78% 43%, 88% 70%, 100% 46%, 100% 100%);
+      transition: background var(--transition);
+    }
+
+    .ui {
+      position: relative;
+      z-index: 20;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 16px;
+      pointer-events: none;
+    }
+
+    .hud,
+    .bottom-bar,
+    .info-panel,
+    .speaker-panel,
+    .level-chip,
+    .nav-button,
+    .mini-help,
+    .jump-badge {
+      pointer-events: auto;
+    }
+
+    .hud {
+      width: var(--safe-width);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-pill,
+    .level-chip,
+    .nav-button,
+    .action-button,
+    .speaker-toggle,
+    .sound-toggle,
+    .jump-badge {
+      border: 4px solid #121826;
+      border-bottom-width: 7px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 10px 0 rgba(18,24,38,0.12), 0 14px 26px rgba(18,24,38,0.12);
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 22px;
+      min-height: 62px;
+      background: linear-gradient(180deg, #ffffff, #f5fbff);
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ff6052, #dc382c);
+      border: 4px solid #121826;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .brand-copy strong { display: block; font-size: 18px; }
+    .brand-copy span { display: block; font-size: 12px; color: #566074; }
+
+    .hud-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .jump-badge {
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #2f3547;
+      background: linear-gradient(180deg, #fff8df, #ffe99f);
+    }
+
+    .sound-toggle,
+    .speaker-toggle,
+    .action-button {
+      cursor: pointer;
+      border-radius: 20px;
+      padding: 11px 16px;
+      font-size: 14px;
+      color: #1a2130;
+      background: linear-gradient(180deg, #fff, #edf7ff);
+      transition: transform .18s ease, filter .18s ease;
+    }
+
+    .sound-toggle:hover,
+    .action-button:hover {
+      transform: translateY(-2px);
+      filter: saturate(1.05);
+    }
+
+    .nav-button:hover {
+      transform: translateY(calc(-50% - 2px));
+      filter: saturate(1.05);
+    }
+
+    .node:hover {
+      transform: translate(-50%, calc(-50% - 2px));
+      filter: saturate(1.05);
+    }
+
+    .node.active:hover {
+      transform: translate(-50%, calc(-50% - 2px)) scale(1.12);
+      filter: saturate(1.05);
+    }
+
+    .world-stage {
+      position: relative;
+      display: grid;
+      place-items: center start;
+      overflow: hidden;
+      width: var(--safe-width);
+      margin: 0 auto;
+    }
+
+    .world-frame {
+      position: relative;
+      width: min(calc(100% - 430px), 1280px);
+      height: min(68vh, 760px);
+      border: 7px solid #101625;
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+      box-shadow: 0 24px 0 rgba(16,22,37,0.08), 0 30px 80px rgba(16,22,37,0.18);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    .world-camera {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .world-map {
+      position: absolute;
+      width: var(--map-width);
+      height: var(--map-height);
+      left: 0;
+      top: 0;
+      transform-origin: top left;
+      transition: transform 700ms cubic-bezier(.2,.7,.1,1);
+    }
+
+    .layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .zone {
+      position: absolute;
+      border-radius: 40px;
+      filter: saturate(1.04);
+      box-shadow: inset 0 -10px 0 rgba(0,0,0,0.06);
+    }
+
+    .zone .ground {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 100%;
+      border-radius: inherit;
+      overflow: hidden;
+    }
+
+    .ground::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 -18px 0 rgba(0,0,0,0.06);
+    }
+
+    .meadow {
+      left: 95px; top: 318px; width: 705px; height: 370px;
+      background: linear-gradient(180deg, #9af07a, #52bf4f);
+    }
+    .meadow::after {
+      content: "";
+      position: absolute; left: 0; right: 0; bottom: -52px; height: 76px;
+      background: repeating-linear-gradient(180deg, #d1a365 0 12px, #e8be82 12px 24px, #d29556 24px 36px);
+      border-radius: 0 0 34px 34px;
+    }
+
+    .desert {
+      left: 780px; top: 282px; width: 640px; height: 330px;
+      background: linear-gradient(180deg, #f8d36b, #ebac39);
+    }
+    .desert::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.15), transparent 22%), radial-gradient(circle at 70% 65%, rgba(255,255,255,0.14), transparent 18%);
+      border-radius: inherit;
+    }
+
+    .snow {
+      left: 1375px; top: 302px; width: 600px; height: 308px;
+      background: linear-gradient(180deg, #f3fbff, #d5e9ff);
+    }
+
+    .ruins {
+      left: 1845px; top: 258px; width: 570px; height: 355px;
+      background: linear-gradient(180deg, #cfcaba, #a39a89);
+    }
+
+    .path-svg {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+    }
+
+    .path-line {
+      fill: none;
+      stroke: #f0e9c2;
+      stroke-width: 24;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 4px 0 rgba(0,0,0,0.09));
+    }
+
+    .path-shadow {
+      fill: none;
+      stroke: rgba(87,66,28,0.18);
+      stroke-width: 31;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transform: translateY(4px);
+    }
+
+    .node {
+      position: absolute;
+      width: var(--node-size);
+      height: var(--node-size);
+      border-radius: 50%;
+      border: 5px solid #141a28;
+      background: radial-gradient(circle at 35% 32%, #fffbbf, #ffe268 45%, #edaa2f 70%);
+      box-shadow: 0 10px 0 rgba(20,26,40,0.12), 0 16px 28px rgba(20,26,40,0.15);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
+    }
+
+    .node span {
+      display: none;
+    }
+
+    .node::before {
+      content: "";
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(20,26,40,0.88);
+    }
+
+    .node.active {
+      background: radial-gradient(circle at 35% 32%, #fffef2, #ffd778 48%, #ef7d39 73%);
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 12px 0 rgba(20,26,40,0.14), 0 0 0 10px rgba(255,255,255,0.2), 0 18px 30px rgba(20,26,40,0.18);
+    }
+
+    .node.active::before {
+      width: 16px; height: 16px; background: #101725;
+    }
+
+    .sign,
+    .house,
+    .castle,
+    .pipe,
+    .tree,
+    .block,
+    .mushroom-house,
+    .tower,
+    .pyramid,
+    .water-pond,
+    .boss-house,
+    .flag-post,
+    .coin-board,
+    .flower-clump {
+      position: absolute;
+      transform-origin: center bottom;
+    }
+
+    .tree {
+      width: 48px; height: 92px;
+    }
+    .tree::before {
+      content: "";
+      position: absolute; left: 18px; bottom: 0; width: 12px; height: 34px;
+      background: #8d5a35; border-radius: 8px;
+    }
+    .tree::after {
+      content: "";
+      position: absolute; left: 0; top: 0; width: 48px; height: 56px;
+      background: radial-gradient(circle at 50% 44%, #8ef072, #33a939 70%);
+      border-radius: 50% 50% 46% 46%;
+      box-shadow: -18px 18px 0 4px #44b646, 14px 22px 0 4px #44b646;
+    }
+
+    .block {
+      width: 34px; height: 34px;
+      background: linear-gradient(180deg, #d69a4e, #a76920);
+      border-radius: 6px;
+      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.12), inset 4px 4px 0 rgba(255,255,255,0.18);
+    }
+
+    .pipe {
+      width: 54px; height: 80px;
+      background: linear-gradient(90deg, #48be4d, #2c8e36);
+      border-radius: 10px 10px 14px 14px;
+      box-shadow: inset -5px 0 0 rgba(0,0,0,0.12);
+    }
+    .pipe::before {
+      content: "";
+      position: absolute; top: -16px; left: -6px; right: -6px; height: 22px;
+      background: linear-gradient(180deg, #5fe563, #3ca743);
+      border-radius: 12px;
+      border: 2px solid rgba(0,0,0,0.05);
+    }
+
+    .house {
+      width: 108px; height: 86px;
+    }
+    .house::before {
+      content: "";
+      position: absolute; inset: auto 10px 0 10px; height: 56px;
+      background: #f8ebcb; border: 4px solid #302944; border-radius: 18px;
+    }
+    .house::after {
+      content: "";
+      position: absolute; left: 0; right: 0; top: 0; margin: auto; width: 0; height: 0;
+      border-left: 54px solid transparent;
+      border-right: 54px solid transparent;
+      border-bottom: 44px solid #ee5148;
+      filter: drop-shadow(0 3px 0 rgba(0,0,0,0.1));
+    }
+
+    .mushroom-house {
+      width: 92px; height: 96px;
+    }
+    .mushroom-house::before {
+      content: "";
+      position: absolute; left: 18px; right: 18px; bottom: 0; height: 44px;
+      background: #f4edd7; border: 4px solid #302944; border-radius: 18px;
+    }
+    .mushroom-house::after {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; margin: auto; width: 92px; height: 62px;
+      background: radial-gradient(circle at 35% 40%, #fff, #fff 10px, transparent 12px), radial-gradient(circle at 68% 54%, #fff, #fff 9px, transparent 11px), linear-gradient(180deg, #ff6a5c, #d63d33);
+      border: 4px solid #302944; border-radius: 50px 50px 36px 36px;
+    }
+
+    .castle {
+      width: 154px; height: 148px;
+    }
+    .castle::before {
+      content: "";
+      position: absolute; bottom: 0; left: 18px; right: 18px; height: 90px;
+      background: #eef0f7; border: 4px solid #4a4562; border-radius: 16px;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,0.06);
+    }
+    .castle::after {
+      content: "";
+      position: absolute; left: 0; right: 0; top: 0; bottom: 52px;
+      background:
+        radial-gradient(circle at 20px 26px, #8d6cff 0 20px, transparent 22px),
+        radial-gradient(circle at 134px 26px, #8d6cff 0 20px, transparent 22px),
+        radial-gradient(circle at 77px 10px, #8d6cff 0 28px, transparent 30px),
+        linear-gradient(180deg, transparent 0 24px, #eceff6 24px 100%);
+      background-repeat: no-repeat;
+      border-radius: 18px;
+    }
+
+    .boss-house {
+      width: 116px; height: 114px;
+    }
+    .boss-house::before {
+      content: "";
+      position: absolute; bottom: 0; left: 10px; right: 10px; height: 74px;
+      background: #8a8fa4; border: 4px solid #313548; border-radius: 18px;
+    }
+    .boss-house::after {
+      content: "";
+      position: absolute; left: 50%; top: -2px; width: 84px; height: 54px; transform: translateX(-50%);
+      background: linear-gradient(180deg, #fa7d66, #b4372d);
+      clip-path: polygon(0 100%, 50% 0, 100% 100%);
+      filter: drop-shadow(0 3px 0 rgba(0,0,0,0.12));
+    }
+
+    .tower {
+      width: 62px; height: 112px;
+      background: linear-gradient(180deg, #bfc2cb, #90949f);
+      border: 4px solid #51586a;
+      border-radius: 18px 18px 12px 12px;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,0.08);
+    }
+    .tower::before {
+      content: "";
+      position: absolute; top: -18px; left: -4px; right: -4px; height: 26px;
+      background: linear-gradient(180deg, #d8dbe2, #9fa4b1);
+      clip-path: polygon(0 100%, 8% 38%, 16% 100%, 24% 38%, 32% 100%, 40% 38%, 48% 100%, 56% 38%, 64% 100%, 72% 38%, 80% 100%, 88% 38%, 96% 100%, 100% 38%, 100% 100%);
+    }
+
+    .pyramid {
+      width: 112px; height: 76px;
+      background: linear-gradient(180deg, #efc153, #c89326);
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    }
+
+    .water-pond {
+      width: 120px; height: 82px;
+      background: radial-gradient(circle at 50% 40%, #8ceaff, #43b8ff 70%, #298ed0 100%);
+      border: 5px solid #ebf8ff;
+      border-radius: 34px;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,0.08);
+    }
+
+    .coin-board {
+      padding: 7px 12px;
+      min-width: 68px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #805523;
+      background: linear-gradient(180deg, #ffe282, #e3b23a);
+      border: 4px solid #6f4e1d;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.08);
+    }
+
+    .flag-post {
+      width: 10px; height: 86px;
+      background: #e9ebf4;
+      border-radius: 999px;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.08);
+    }
+    .flag-post::after {
+      content: "";
+      position: absolute; top: 8px; left: 8px; width: 48px; height: 28px;
+      background: linear-gradient(180deg, #ff5d4e, #c7372d);
+      clip-path: polygon(0 0, 100% 20%, 80% 100%, 0 78%);
+      border-radius: 4px;
+    }
+
+    .flower-clump {
+      width: 88px; height: 38px;
+      background:
+        radial-gradient(circle at 12% 65%, #ff67a7 0 7px, #ffe45e 7px 11px, transparent 12px),
+        radial-gradient(circle at 34% 45%, #58c9ff 0 7px, #ffe45e 7px 11px, transparent 12px),
+        radial-gradient(circle at 58% 64%, #f46c5f 0 7px, #ffe45e 7px 11px, transparent 12px),
+        radial-gradient(circle at 82% 44%, #a979ff 0 7px, #ffe45e 7px 11px, transparent 12px);
+    }
+
+    .avatar {
+      position: absolute;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 32%, #ffd9ba 0 20px, #ffd0ad 21px 23px, #d64037 23px 100%);
+      border: 5px solid #151c2d;
+      box-shadow: 0 10px 0 rgba(21,28,45,0.12), 0 18px 28px rgba(21,28,45,0.16);
+      transform: translate(-50%, -50%);
+      transition: left 700ms cubic-bezier(.2,.8,.15,1), top 700ms cubic-bezier(.2,.8,.15,1), transform .25s ease;
+      z-index: 5;
+    }
+
+    .avatar::before {
+      content: "MC";
+      position: absolute;
+      inset: auto 0 11px 0;
+      text-align: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      letter-spacing: .02em;
+    }
+
+    .avatar::after {
+      content: "";
+      position: absolute;
+      left: 12px; right: 12px; top: -2px; height: 20px;
+      background: linear-gradient(180deg, #ff675a, #d63b2f);
+      border-radius: 18px 18px 8px 8px;
+      border: 3px solid #151c2d;
+    }
+
+    .avatar.bounce {
+      animation: avatarBounce .55s ease;
+    }
+
+    @keyframes avatarBounce {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      35% { transform: translate(-50%, -70%) scale(1.05); }
+      60% { transform: translate(-50%, -48%) scale(.98); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .level-chip {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #ff6457, #e24137);
+      color: #fff;
+      max-width: 330px;
+      z-index: 10;
+      border-color: #631e1b;
+    }
+
+    .level-chip strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.02;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .level-chip span {
+      display: block;
+      font-size: 12px;
+      opacity: .95;
+      font-weight: 800;
+    }
+
+    .nav-button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 68px;
+      height: 86px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(240,245,255,0.92));
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      color: #1f2737;
+      cursor: pointer;
+      z-index: 11;
+      user-select: none;
+    }
+
+    .nav-prev { left: 18px; }
+    .nav-next { right: 18px; }
+
+    .bottom-bar {
+      width: var(--safe-width);
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mini-help {
+      padding: 14px 18px;
+      border-radius: 22px;
+      background: var(--panel);
+      border: 4px solid #121826;
+      border-bottom-width: 7px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .kbd {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: #fff;
+      border: 2px solid #c3cde0;
+      font-size: 12px;
+    }
+
+    .progress-dots {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--panel);
+      border: 4px solid #121826;
+      border-bottom-width: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .progress-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #cad6e8;
+      border: 2px solid #394154;
+      transition: transform .18s ease, background .18s ease;
+    }
+
+    .progress-dot.active {
+      background: linear-gradient(180deg, #fff7a8, #ffb337);
+      transform: scale(1.2);
+    }
+
+    .info-panel,
+    .speaker-panel {
+      position: fixed;
+      top: 104px;
+      right: 16px;
+      width: min(370px, calc(100vw - 32px));
+      max-height: calc(100vh - 198px);
+      overflow: auto;
+      z-index: 30;
+      padding: 18px;
+      border-radius: 26px;
+      border: 5px solid #121826;
+      border-bottom-width: 8px;
+      background: var(--panel-strong);
+      box-shadow: 0 24px 0 rgba(18,24,38,0.08), 0 30px 70px rgba(18,24,38,0.24);
+      transition: opacity var(--transition), transform var(--transition);
+      scrollbar-width: thin;
+      scrollbar-color: #7f8ca6 rgba(255,255,255,0.3);
+      overscroll-behavior: contain;
+    }
+
+    .speaker-panel {
+      right: 456px;
+      width: min(360px, calc(100vw - 32px));
+      background: rgba(255,249,230,0.98);
+      display: none;
+    }
+
+    .speaker-panel.open { display: block; }
+
+    .panel-eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #76839f;
+      margin-bottom: 10px;
+    }
+
+    .panel-eyebrow::before {
+      content: "";
+      width: 18px;
+      height: 3px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .info-panel h2,
+    .speaker-panel h3 {
+      margin: 0 0 10px;
+      line-height: 1.02;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 900;
+      color: #636e84;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .info-panel p {
+      margin: 0 0 10px;
+      line-height: 1.48;
+      color: #41495d;
+    }
+
+    .bullet-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 12px;
+    }
+
+    .bullet-list li {
+      padding: 9px 11px;
+      border-radius: 16px;
+      background: #f4f7fb;
+      border: 2px solid #d7e0ef;
+      font-weight: 700;
+      color: #273049;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .meta-card {
+      padding: 11px;
+      border-radius: 16px;
+      border: 2px solid #d7e0ef;
+      background: #fff;
+    }
+
+    .meta-card strong { display: block; font-size: 13px; color: #616e88; text-transform: uppercase; margin-bottom: 6px; }
+    .meta-card span { display: block; font-weight: 900; font-size: 16px; color: #1f2534; }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .action-button.primary {
+      background: linear-gradient(180deg, #ff6557, #e14539);
+      color: #fff;
+      border-color: #5d1715;
+    }
+
+    .speaker-panel h3 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .speaker-panel ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.75;
+      color: #333c52;
+      font-weight: 700;
+    }
+
+    .speaker-panel li + li { margin-top: 8px; }
+
+    .mobile-title {
+      display: none;
+    }
+
+    @media (max-width: 1360px) {
+      .info-panel { width: min(380px, calc(100vw - 32px)); }
+      .speaker-panel { right: 16px; top: auto; bottom: 160px; width: min(380px, calc(100vw - 32px)); }
+    }
+
+    @media (max-width: 1100px) {
+      body { overflow: auto; }
+      .ui {
+        height: auto;
+        min-height: 100vh;
+        grid-template-rows: auto auto auto auto;
+        gap: 12px;
+      }
+      .world-stage {
+        width: 100%;
+        margin: 0;
+        place-items: center;
+      }
+
+      .world-frame {
+        width: calc(100vw - 32px);
+        height: 58vh;
+        min-height: 420px;
+      }
+      .info-panel {
+        position: relative;
+        top: 0; right: 0;
+        width: var(--safe-width);
+        max-height: none;
+        margin: 0 auto;
+      }
+      .speaker-panel {
+        position: relative;
+        bottom: auto;
+        right: 0;
+        width: var(--safe-width);
+        max-height: none;
+        margin: 0 auto;
+      }
+      .bottom-bar { align-items: stretch; }
+    }
+
+    @media (max-width: 760px) {
+      :root { --node-size: 52px; }
+      .hud { align-items: stretch; }
+      .brand-pill { flex: 1 1 auto; }
+      .hud-actions { justify-content: flex-start; }
+      .brand-copy strong { font-size: 16px; }
+      .level-chip strong { font-size: 20px; }
+      .level-chip span { font-size: 12px; }
+      .nav-button { width: 58px; height: 74px; font-size: 28px; }
+      .info-panel h2 { font-size: 28px; }
+      .meta-row { grid-template-columns: 1fr; }
+      .mini-help { font-size: 12px; }
+      .progress-dots { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body class="theme-meadow">
+  <div class="background" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="clouds">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+      <div class="cloud c4"></div>
+    </div>
+    <div class="far-hills"></div>
+    <div class="near-hills"></div>
+  </div>
+
+  <div class="ui">
+    <header class="hud">
+      <div class="brand-pill">
+        <div class="brand-badge">MC</div>
+        <div class="brand-copy">
+          <strong>Examen DFS — Projection à 5 ans</strong>
+          <span>Malik Cheikh</span>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <div class="jump-badge" id="jumpLabel">Niveau 1 / 8</div>
+        <button class="sound-toggle" id="soundToggle" type="button">🔊 Son : ON</button>
+      </div>
+    </header>
+
+    <section class="world-stage">
+      <div class="world-frame">
+        <div class="level-chip" id="levelChip">
+          <strong>Monde 1 — Intro</strong>
+          <span>Projection vers mon métier idéal</span>
+        </div>
+
+        <button class="nav-button nav-prev" id="prevButton" type="button" aria-label="Niveau précédent">‹</button>
+        <button class="nav-button nav-next" id="nextButton" type="button" aria-label="Niveau suivant">›</button>
+
+        <div class="world-camera" id="camera">
+          <div class="world-map" id="worldMap">
+            <div class="layer scenery-layer">
+              <div class="zone meadow"></div>
+              <div class="zone desert"></div>
+              <div class="zone snow"></div>
+              <div class="zone ruins"></div>
+
+              <div class="tree" style="left:170px; top:386px; transform:scale(.9);"></div>
+              <div class="tree" style="left:250px; top:372px; transform:scale(1.05);"></div>
+              <div class="tree" style="left:350px; top:390px; transform:scale(.86);"></div>
+              <div class="tree" style="left:648px; top:388px; transform:scale(.95);"></div>
+              <div class="tree" style="left:862px; top:336px; transform:scale(.9);"></div>
+              <div class="tree" style="left:1238px; top:340px; transform:scale(.92);"></div>
+              <div class="tree" style="left:1710px; top:382px; transform:scale(.86);"></div>
+              <div class="tree" style="left:2198px; top:376px; transform:scale(.82);"></div>
+
+              <div class="flower-clump" style="left:300px; top:592px;"></div>
+              <div class="flower-clump" style="left:520px; top:628px;"></div>
+              <div class="flower-clump" style="left:1432px; top:596px;"></div>
+              <div class="flower-clump" style="left:1888px; top:568px;"></div>
+
+              <div class="block" style="left:555px; top:454px;"></div>
+              <div class="block" style="left:602px; top:454px;"></div>
+              <div class="block" style="left:1180px; top:414px;"></div>
+              <div class="block" style="left:1226px; top:414px;"></div>
+              <div class="block" style="left:2058px; top:424px;"></div>
+              <div class="block" style="left:2104px; top:424px;"></div>
+
+              <div class="mushroom-house" style="left:458px; top:360px;"></div>
+              <div class="house" style="left:698px; top:318px;"></div>
+              <div class="coin-board" style="left:615px; top:404px;">×5</div>
+
+              <div class="pyramid" style="left:946px; top:246px;"></div>
+              <div class="pyramid" style="left:1025px; top:230px; transform:scale(.82);"></div>
+              <div class="tower" style="left:1108px; top:318px;"></div>
+              <div class="coin-board" style="left:1012px; top:398px;">×5</div>
+              <div class="mushroom-house" style="left:1268px; top:318px;"></div>
+
+              <div class="tower" style="left:1568px; top:332px; transform:scale(1.02);"></div>
+              <div class="coin-board" style="left:1468px; top:444px;">×5</div>
+              <div class="pipe" style="left:1736px; top:470px;"></div>
+              <div class="water-pond" style="left:1618px; top:476px; width:112px; height:72px;"></div>
+
+              <div class="tower" style="left:1942px; top:326px;"></div>
+              <div class="tower" style="left:2078px; top:326px;"></div>
+              <div class="water-pond" style="left:2028px; top:466px;"></div>
+              <div class="flag-post" style="left:2098px; top:294px;"></div>
+              <div class="castle" style="left:2126px; top:282px;"></div>
+              <div class="coin-board" style="left:2078px; top:446px;">×5</div>
+              <div class="mushroom-house" style="left:2248px; top:392px; transform:scale(.76);"></div>            </div>
+
+            <svg class="path-svg" viewBox="0 0 2600 980" aria-hidden="true">
+              <path class="path-shadow" d="M 250 632 L 420 632 L 540 570 L 660 560 L 770 558 L 910 530 L 1030 470 L 1140 450 L 1260 470 L 1390 520 L 1510 540 L 1630 548 L 1750 530 L 1880 510 L 2010 515 L 2070 536 L 2128 542" />
+              <path class="path-line" d="M 250 632 L 420 632 L 540 570 L 660 560 L 770 558 L 910 530 L 1030 470 L 1140 450 L 1260 470 L 1390 520 L 1510 540 L 1630 548 L 1750 530 L 1880 510 L 2010 515 L 2070 536 L 2128 542" />
+            </svg>
+
+            <button class="node active" data-index="0" style="left:250px; top:632px;"><span>1</span></button>
+            <button class="node" data-index="1" style="left:420px; top:632px;"><span>2</span></button>
+            <button class="node" data-index="2" style="left:540px; top:570px;"><span>3</span></button>
+            <button class="node" data-index="3" style="left:770px; top:558px;"><span>4</span></button>
+            <button class="node" data-index="4" style="left:1140px; top:450px;"><span>5</span></button>
+            <button class="node" data-index="5" style="left:1510px; top:540px;"><span>6</span></button>
+            <button class="node" data-index="6" style="left:1880px; top:510px;"><span>7</span></button>
+            <button class="node" data-index="7" style="left:2128px; top:542px;"><span>8</span></button>
+
+            <div class="avatar" id="avatar" style="left:250px; top:632px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="bottom-bar">
+      <div class="mini-help">
+        <span><span class="kbd">←</span> <span class="kbd">→</span> changer de niveau</span>
+        <span><span class="kbd">Molette</span> naviguer</span>
+        <span>Clique sur un niveau pour avancer dans l’oral</span>
+      </div>
+      <div class="progress-dots" id="progressDots"></div>
+    </footer>
+  </div>
+
+  <aside class="info-panel" id="infoPanel">
+    <div id="panelContent"></div>
+  </aside>
+
+  <script>
+    const levels = [
+      {
+        world: 'Monde 1 — Départ',
+        subtitle: 'Objectif professionnel',
+        title: 'Dans 5 ans, je me vois chef de projet technique.',
+        theme: 'meadow',
+        blurb: 'Je veux évoluer vers un rôle où je garde une vraie maîtrise technique tout en pilotant des projets, des choix d’architecture et une équipe.',
+        bullets: [
+          'Cadrer les besoins et transformer des problèmes complexes en solutions concrètes.',
+          'Faire le lien entre vision produit, qualité logicielle et contraintes terrain.',
+          'Faire grandir mon auto-entreprise en parallèle, avec une offre plus structurée.'
+        ],
+        meta: [
+          ['Direction', 'Pilotage technique'],
+          ['Ambition', 'Responsabilité + impact']
+        ]
+      },
+      {
+        world: 'Monde 2 — Métier visé',
+        subtitle: 'Chef de projet technique, lead ou architecte',
+        title: 'Le poste peut avoir plusieurs noms, mais le rôle reste clair.',
+        theme: 'meadow',
+        blurb: 'Je veux être le profil qui comprend le besoin, prend les bonnes décisions techniques et sécurise la réussite du projet.',
+        bullets: [
+          'Chef de projet technique : cadrage, priorisation, coordination et suivi.',
+          'Lead développeur : accompagnement de l’équipe, revues de code, qualité du delivery.',
+          'Architecte logiciel : vision globale, choix structurants, maintenabilité long terme.'
+        ],
+        meta: [
+          ['Socle', 'Développement logiciel'],
+          ['Évolution', 'Leadership technique']
+        ]
+      },
+      {
+        world: 'Monde 3 — Environnement',
+        subtitle: 'Le cadre dans lequel je performe',
+        title: 'J’ai besoin de challenge, d’autonomie et d’une équipe saine.',
+        theme: 'meadow',
+        blurb: 'Mon quotidien idéal combine problèmes techniques stimulants, bonne ambiance d’équipe et conditions de travail sérieuses.',
+        bullets: [
+          'Des sujets variés avec du challenge constant.',
+          'Une équipe avec entraide, bonne entente et humour au quotidien.',
+          'Un à deux jours de télétravail, un bureau agréable et un rythme durable.'
+        ],
+        meta: [
+          ['Rythme', 'Durable'],
+          ['Culture', 'Entraide']
+        ]
+      },
+      {
+        world: 'Monde 4 — Réalisations',
+        subtitle: 'Projets déjà construits',
+        title: 'Je veux continuer à faire évoluer des logiciels utiles.',
+        theme: 'desert',
+        blurb: 'Mes projets actuels montrent déjà le type d’impact que je recherche : produire des outils concrets, utiles et pensés pour de vrais utilisateurs.',
+        bullets: [
+          'AbilityBrowser : navigateur accessible pour faciliter l’usage du web.',
+          'HeadPilot : contrôle de l’ordinateur avec la tête, orienté accessibilité.',
+          'Pictocom : logiciel de communication pour faciliter l’expression.'
+        ],
+        meta: [
+          ['Preuve', 'Projets livrés'],
+          ['Suite', 'Maintenir et améliorer']
+        ]
+      },
+      {
+        world: 'Monde 5 — Compétences',
+        subtitle: 'Technique + posture',
+        title: 'Je progresse par répétition, curiosité et persévérance.',
+        theme: 'desert',
+        blurb: 'J’ai consolidé mes bases de développeur tout en montant sur des domaines plus avancés et stratégiques.',
+        bullets: [
+          'Architecture logicielle, développement full stack et accessibilité numérique.',
+          'Montée en compétence sur l’IA, la cybersécurité, le cloud et le DevOps.',
+          'Persévérance, initiative, curiosité et communication.'
+        ],
+        meta: [
+          ['Force', 'Apprentissage rapide'],
+          ['Posture', 'Initiative']
+        ]
+      },
+      {
+        world: 'Monde 6 — Défis',
+        subtitle: 'Ce que je dois maîtriser',
+        title: 'Le vrai défi est de tenir la qualité dans la durée.',
+        theme: 'snow',
+        blurb: 'Un projet ne réussit pas seulement parce qu’il fonctionne aujourd’hui. Il doit rester lisible, maintenable et transmissible.',
+        bullets: [
+          'Limiter la dette technique et garder une conception propre.',
+          'Maintenir une documentation utile, à jour et exploitable.',
+          'Préserver la cohésion entre métier, technique, produit et équipe.'
+        ],
+        meta: [
+          ['Risque', 'Dette technique'],
+          ['Réponse', 'Méthode + communication']
+        ]
+      },
+      {
+        world: 'Monde 7 — Activité',
+        subtitle: 'Auto-entreprise structurée',
+        title: 'Je veux transformer mon expertise en valeur concrète.',
+        theme: 'ruins',
+        blurb: 'Mon auto-entreprise doit devenir plus structurée : moins improvisée, plus claire dans son offre, ses livrables et sa valeur.',
+        bullets: [
+          'Audit et conseil : architecture, qualité, accessibilité, sécurité.',
+          'Développement : applications web, mobile et logiciels métiers.',
+          'Produits : solutions réutilisables autour de l’accessibilité et de la productivité.'
+        ],
+        meta: [
+          ['Objectif', 'Structurer l’offre'],
+          ['Valeur', 'Livrer utile']
+        ]
+      },
+      {
+        world: 'Monde 8 — Château final',
+        subtitle: 'Conclusion',
+        title: 'Mon objectif : devenir un chef de projet technique fiable.',
+        theme: 'finale',
+        blurb: 'Je veux être le profil qui rend un projet plus clair, plus solide et mieux organisé après son passage.',
+        bullets: [
+          'Comprendre les usages réels, pas seulement les fonctionnalités.',
+          'Structurer le code et les décisions pour éviter le bricolage.',
+          'Faire progresser les projets, les équipes et mon activité.'
+        ],
+        meta: [
+          ['Message final', 'Fiabilité'],
+          ['Promesse', 'Clarté, qualité, impact']
+        ]
+      }
+    ];
+
+    const mapWidth = 2600;
+    const mapHeight = 980;
+    const nodes = [...document.querySelectorAll('.node')];
+    const avatar = document.getElementById('avatar');
+    const worldMap = document.getElementById('worldMap');
+    const worldFrame = document.querySelector('.world-frame');
+    const panelContent = document.getElementById('panelContent');
+    const progressDots = document.getElementById('progressDots');
+    const levelChip = document.getElementById('levelChip');
+    const jumpLabel = document.getElementById('jumpLabel');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+    const soundToggle = document.getElementById('soundToggle');
+
+    let currentIndex = 0;
+    let soundEnabled = true;
+    let audioContext;
+
+    function ensureAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    function playTone(type = 'move') {
+      if (!soundEnabled) return;
+
+      ensureAudio();
+
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+
+      if (type === 'move') {
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(520, now);
+        oscillator.frequency.exponentialRampToValueAtTime(780, now + 0.1);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+        oscillator.start(now);
+        oscillator.stop(now + 0.16);
+        return;
+      }
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(440, now);
+      oscillator.frequency.exponentialRampToValueAtTime(660, now + 0.08);
+      oscillator.frequency.exponentialRampToValueAtTime(990, now + 0.16);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      oscillator.start(now);
+      oscillator.stop(now + 0.24);
+    }
+
+
+    function buildProgress() {
+      progressDots.innerHTML = levels.map((_, index) => `<div class="progress-dot ${index === 0 ? 'active' : ''}"></div>`).join('');
+    }
+
+    function renderPanel(index) {
+      const level = levels[index];
+      panelContent.innerHTML = `
+        <div class="panel-eyebrow">${level.world}</div>
+        <h2>${level.title}</h2>
+        <p class="subtitle">${level.subtitle}</p>
+        <p>${level.blurb}</p>
+        <ul class="bullet-list">
+          ${level.bullets.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+        <div class="meta-row">
+          ${level.meta.map(([label, value]) => `<div class="meta-card"><strong>${label}</strong><span>${value}</span></div>`).join('')}
+        </div>
+        <div class="panel-actions">
+          <button class="action-button primary" id="panelNextButton" type="button">Continuer</button>
+        </div>
+      `;
+
+      const panelNextButton = document.getElementById('panelNextButton');
+      if (panelNextButton) {
+        panelNextButton.addEventListener('click', () => goToLevel(Math.min(currentIndex + 1, levels.length - 1)));
+      }
+    }
+
+
+    function updateChip(index) {
+      const level = levels[index];
+      levelChip.innerHTML = `<strong>${level.world}</strong><span>${level.subtitle}</span>`;
+      jumpLabel.textContent = `Niveau ${index + 1} / ${levels.length}`;
+      document.body.className = `theme-${level.theme}`;
+    }
+
+    function updateActiveNode(index) {
+      nodes.forEach((node, nodeIndex) => {
+        node.classList.toggle('active', nodeIndex === index);
+      });
+      [...progressDots.children].forEach((dot, dotIndex) => {
+        dot.classList.toggle('active', dotIndex === index);
+      });
+    }
+
+    function setAvatar(index) {
+      const node = nodes[index];
+      const x = parseFloat(node.style.left);
+      const y = parseFloat(node.style.top);
+      avatar.style.left = `${x}px`;
+      avatar.style.top = `${y}px`;
+      avatar.classList.remove('bounce');
+      void avatar.offsetWidth;
+      avatar.classList.add('bounce');
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateCamera(index) {
+      const frameWidth = worldFrame.clientWidth;
+      const frameHeight = worldFrame.clientHeight;
+      const scale = Math.max(frameWidth / mapWidth, frameHeight / mapHeight);
+      const zoom = Math.min(Math.max(scale * 1.22, 0.58), 1.12);
+
+      const node = nodes[index];
+      const x = parseFloat(node.style.left);
+      const y = parseFloat(node.style.top);
+
+      const targetScreenX = frameWidth * 0.54;
+      const targetScreenY = frameHeight * 0.55;
+
+      const tx = clamp(targetScreenX - x * zoom, frameWidth - mapWidth * zoom - 24, 24);
+      const ty = clamp(targetScreenY - y * zoom, frameHeight - mapHeight * zoom - 16, 10);
+
+      worldMap.style.transform = `translate(${tx}px, ${ty}px) scale(${zoom})`;
+    }
+
+    function goToLevel(index, withSound = true) {
+      currentIndex = clamp(index, 0, levels.length - 1);
+      updateChip(currentIndex);
+      updateActiveNode(currentIndex);
+      setAvatar(currentIndex);
+      updateCamera(currentIndex);
+      renderPanel(currentIndex);
+
+      const infoPanel = document.getElementById('infoPanel');
+      if (infoPanel) {
+        infoPanel.scrollTop = 0;
+      }
+
+      if (withSound) {
+        playTone('move');
+      }
+    }
+
+
+    nodes.forEach((node, index) => {
+      node.addEventListener('click', () => goToLevel(index));
+      node.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          goToLevel(index);
+        }
+      });
+    });
+
+    if (prevButton) {
+      prevButton.addEventListener('click', () => goToLevel(currentIndex - 1));
+    }
+    if (nextButton) {
+      nextButton.addEventListener('click', () => goToLevel(currentIndex + 1));
+    }
+
+    if (soundToggle) {
+      soundToggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundToggle.textContent = soundEnabled ? '🔊 Son : ON' : '🔇 Son : OFF';
+
+        if (soundEnabled) {
+          playTone('open');
+        }
+      });
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight') {
+        goToLevel(currentIndex + 1);
+      } else if (event.key === 'ArrowLeft') {
+        goToLevel(currentIndex - 1);
+      }
+    });
+
+    let wheelLock = false;
+    window.addEventListener('wheel', (event) => {
+      if (window.innerWidth <= 1100) return;
+      if (wheelLock) return;
+      if (Math.abs(event.deltaY) < 16) return;
+
+      const panel = event.target.closest ? event.target.closest('.info-panel') : null;
+      if (panel) {
+        const canScrollDown = panel.scrollTop + panel.clientHeight < panel.scrollHeight - 2;
+        const canScrollUp = panel.scrollTop > 2;
+
+        if ((event.deltaY > 0 && canScrollDown) || (event.deltaY < 0 && canScrollUp)) {
+          return;
+        }
+      }
+
+      wheelLock = true;
+
+      if (event.deltaY > 0) {
+        goToLevel(currentIndex + 1);
+      } else {
+        goToLevel(currentIndex - 1);
+      }
+
+      setTimeout(() => { wheelLock = false; }, 420);
+    }, { passive: true });
+
+    window.addEventListener('resize', () => updateCamera(currentIndex));
+
+    buildProgress();
+    goToLevel(0, false);
+  </script>
+</body>
+</html>
