@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DFS — Malik Cheikh · Projection à 5 ans</title>
+  <meta name="description" content="Présentation interactive de la projection professionnelle à 5 ans de Malik Cheikh." />
+  <meta name="theme-color" content="#80d7ff" />
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+</head>
+<body class="theme-meadow">
+  <a class="skip-link" href="#infoPanel">Aller au contenu du niveau</a>
+  <div class="background" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="clouds">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+      <div class="cloud c4"></div>
+    </div>
+    <div class="far-hills"></div>
+    <div class="near-hills"></div>
+  </div>
+
+  <main class="ui" id="mainContent">
+    <header class="hud">
+      <div class="brand-pill">
+        <div class="brand-badge">MC</div>
+        <div class="brand-copy">
+          <strong>Examen DFS — Projection à 5 ans</strong>
+          <span>Malik Cheikh</span>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <div class="jump-badge" id="jumpLabel" aria-live="polite">Niveau 1 / 8</div>
+        <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="true">🔊 Son : ON</button>
+      </div>
+    </header>
+
+    <section class="world-stage">
+      <div class="world-frame">
+        <div class="level-chip" id="levelChip">
+          <strong>Monde 1 — Intro</strong>
+          <span>Projection vers mon métier idéal</span>
+        </div>
+
+        <button class="nav-button nav-prev" id="prevButton" type="button" aria-label="Niveau précédent">‹</button>
+        <button class="nav-button nav-next" id="nextButton" type="button" aria-label="Niveau suivant">›</button>
+
+        <div class="world-camera" id="camera">
+          <div class="world-map" id="worldMap">
+            <div class="layer scenery-layer">
+              <div class="zone meadow"></div>
+              <div class="zone desert"></div>
+              <div class="zone snow"></div>
+              <div class="zone ruins"></div>
+
+              <div class="tree" style="left:170px; top:386px; transform:scale(.9);"></div>
+              <div class="tree" style="left:250px; top:372px; transform:scale(1.05);"></div>
+              <div class="tree" style="left:350px; top:390px; transform:scale(.86);"></div>
+              <div class="tree" style="left:648px; top:388px; transform:scale(.95);"></div>
+              <div class="tree" style="left:862px; top:336px; transform:scale(.9);"></div>
+              <div class="tree" style="left:1238px; top:340px; transform:scale(.92);"></div>
+              <div class="tree" style="left:1710px; top:382px; transform:scale(.86);"></div>
+              <div class="tree" style="left:2198px; top:376px; transform:scale(.82);"></div>
+
+              <div class="flower-clump" style="left:300px; top:592px;"></div>
+              <div class="flower-clump" style="left:520px; top:628px;"></div>
+              <div class="flower-clump" style="left:1432px; top:596px;"></div>
+              <div class="flower-clump" style="left:1888px; top:568px;"></div>
+
+              <div class="block" style="left:555px; top:454px;"></div>
+              <div class="block" style="left:602px; top:454px;"></div>
+              <div class="block" style="left:1180px; top:414px;"></div>
+              <div class="block" style="left:1226px; top:414px;"></div>
+              <div class="block" style="left:2058px; top:424px;"></div>
+              <div class="block" style="left:2104px; top:424px;"></div>
+
+              <div class="mushroom-house" style="left:458px; top:360px;"></div>
+              <div class="house" style="left:698px; top:318px;"></div>
+              <div class="coin-board" style="left:615px; top:404px;">×5</div>
+
+              <div class="pyramid" style="left:946px; top:246px;"></div>
+              <div class="pyramid" style="left:1025px; top:230px; transform:scale(.82);"></div>
+              <div class="tower" style="left:1108px; top:318px;"></div>
+              <div class="coin-board" style="left:1012px; top:398px;">×5</div>
+              <div class="mushroom-house" style="left:1268px; top:318px;"></div>
+
+              <div class="tower" style="left:1568px; top:332px; transform:scale(1.02);"></div>
+              <div class="coin-board" style="left:1468px; top:444px;">×5</div>
+              <div class="pipe" style="left:1736px; top:470px;"></div>
+              <div class="water-pond" style="left:1618px; top:476px; width:112px; height:72px;"></div>
+
+              <div class="tower" style="left:1942px; top:326px;"></div>
+              <div class="tower" style="left:2078px; top:326px;"></div>
+              <div class="water-pond" style="left:2028px; top:466px;"></div>
+              <div class="flag-post" style="left:2098px; top:294px;"></div>
+              <div class="castle" style="left:2126px; top:282px;"></div>
+              <div class="coin-board" style="left:2078px; top:446px;">×5</div>
+              <div class="mushroom-house" style="left:2248px; top:392px; transform:scale(.76);"></div>            </div>
+
+            <svg class="path-svg" viewBox="0 0 2600 980" aria-hidden="true">
+              <path class="path-shadow" d="M 250 632 L 420 632 L 540 570 L 660 560 L 770 558 L 910 530 L 1030 470 L 1140 450 L 1260 470 L 1390 520 L 1510 540 L 1630 548 L 1750 530 L 1880 510 L 2010 515 L 2070 536 L 2128 542" />
+              <path class="path-line" d="M 250 632 L 420 632 L 540 570 L 660 560 L 770 558 L 910 530 L 1030 470 L 1140 450 L 1260 470 L 1390 520 L 1510 540 L 1630 548 L 1750 530 L 1880 510 L 2010 515 L 2070 536 L 2128 542" />
+            </svg>
+
+            <button class="node active" data-index="0" style="left:250px; top:632px;"><span>1</span></button>
+            <button class="node" data-index="1" style="left:420px; top:632px;"><span>2</span></button>
+            <button class="node" data-index="2" style="left:540px; top:570px;"><span>3</span></button>
+            <button class="node" data-index="3" style="left:770px; top:558px;"><span>4</span></button>
+            <button class="node" data-index="4" style="left:1140px; top:450px;"><span>5</span></button>
+            <button class="node" data-index="5" style="left:1510px; top:540px;"><span>6</span></button>
+            <button class="node" data-index="6" style="left:1880px; top:510px;"><span>7</span></button>
+            <button class="node" data-index="7" style="left:2128px; top:542px;"><span>8</span></button>
+
+            <div class="avatar" id="avatar" style="left:250px; top:632px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="bottom-bar">
+      <div class="mini-help">
+        <span><span class="kbd">←</span> <span class="kbd">→</span> changer de niveau</span>
+        <span><span class="kbd">Molette</span> naviguer</span>
+        <span>Clique sur un niveau pour avancer dans l’oral</span>
+      </div>
+      <div class="progress-dots" id="progressDots" aria-hidden="true"></div>
+    </footer>
+  </main>
+
+  <aside class="info-panel" id="infoPanel" aria-label="Détails du niveau sélectionné" aria-live="polite">
+    <div id="panelContent"></div>
+  </aside>
+  <script src="./assets/js/data.js" defer></script>
+  <script src="./assets/js/app.js" defer></script>
+</body>
+</html>
