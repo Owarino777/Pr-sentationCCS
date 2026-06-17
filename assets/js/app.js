@@ -24,6 +24,12 @@
   const prevButton = document.getElementById('prevButton');
   const nextButton = document.getElementById('nextButton');
   const soundToggle = document.getElementById('soundToggle');
+  const levelAssets = [
+    './assets/SMB_Fire_Mario_Walking.gif',
+    './assets/Green_Koopa_Troopa_SMB.gif',
+    './assets/Bullet_Bill_Super_Mario_Bros.png',
+    './assets/BuzzyBeetleSMBUnderground.gif',
+  ];
 
   let currentIndex = 0;
   let soundEnabled = true;
@@ -42,6 +48,10 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function getLevelAsset(index) {
+    return levelAssets[index % levelAssets.length];
   }
 
   function ensureAudio() {
@@ -110,8 +120,13 @@
       .join('');
 
     panelContent.innerHTML = `
-      <div class="panel-eyebrow">${escapeHTML(level.world)}</div>
-      <h2 id="levelTitle">${escapeHTML(level.title)}</h2>
+      <div class="panel-header">
+        <div>
+          <div class="panel-eyebrow">${escapeHTML(level.world)}</div>
+          <h2 id="levelTitle">${escapeHTML(level.title)}</h2>
+        </div>
+        <img class="panel-sprite" src="${getLevelAsset(index)}" alt="" width="32" height="32" decoding="async" />
+      </div>
       <p class="subtitle">${escapeHTML(level.subtitle)}</p>
       <p>${escapeHTML(level.blurb)}</p>
       <ul class="bullet-list">${bullets}</ul>

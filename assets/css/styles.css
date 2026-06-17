@@ -370,6 +370,51 @@
       inset: 0;
     }
 
+    .sprite-layer {
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .map-sprite {
+      position: absolute;
+      width: auto;
+      height: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      transform: translate(-50%, -100%) scale(3);
+      transform-origin: center bottom;
+      filter: drop-shadow(0 8px 0 rgba(20,26,40,0.12));
+    }
+
+    .map-sprite--koopa {
+      animation: patrolKoopa 4.8s ease-in-out infinite;
+    }
+
+    .map-sprite--beetle {
+      animation: patrolBeetle 5.4s ease-in-out infinite;
+    }
+
+    .map-sprite--bullet {
+      animation: bulletDrift 3.2s linear infinite;
+    }
+
+    @keyframes patrolKoopa {
+      0%, 100% { transform: translate(-50%, -100%) scale(3); }
+      50% { transform: translate(42px, -100%) scale(3); }
+    }
+
+    @keyframes patrolBeetle {
+      0%, 100% { transform: translate(-50%, -100%) scale(2.8); }
+      50% { transform: translate(-38px, -100%) scale(2.8); }
+    }
+
+    @keyframes bulletDrift {
+      0% { transform: translate(70px, -100%) scale(3.2); opacity: 0; }
+      12% { opacity: 1; }
+      82% { opacity: 1; }
+      100% { transform: translate(-110px, -100%) scale(3.2); opacity: 0; }
+    }
+
     .zone {
       position: absolute;
       border-radius: 40px;
@@ -676,35 +721,15 @@
 
     .avatar {
       position: absolute;
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 36% 32%, #ffd9ba 0 20px, #ffd0ad 21px 23px, #d64037 23px 100%);
-      border: 5px solid #151c2d;
-      box-shadow: 0 10px 0 rgba(21,28,45,0.12), 0 18px 28px rgba(21,28,45,0.16);
-      transform: translate(-50%, -50%);
+      width: 72px;
+      height: 96px;
+      background: url("../SMB_Fire_Mario_Walking.gif") center bottom / contain no-repeat;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 12px 0 rgba(21,28,45,0.12)) drop-shadow(0 18px 18px rgba(21,28,45,0.18));
+      transform: translate(-50%, -100%);
       transition: left 700ms cubic-bezier(.2,.8,.15,1), top 700ms cubic-bezier(.2,.8,.15,1), transform .25s ease;
-      z-index: 5;
-    }
-
-    .avatar::before {
-      content: "MC";
-      position: absolute;
-      inset: auto 0 11px 0;
-      text-align: center;
-      color: #fff;
-      font-weight: 900;
-      font-size: 14px;
-      letter-spacing: 0;
-    }
-
-    .avatar::after {
-      content: "";
-      position: absolute;
-      left: 12px; right: 12px; top: -2px; height: 20px;
-      background: linear-gradient(180deg, #ff675a, #d63b2f);
-      border-radius: 18px 18px 8px 8px;
-      border: 3px solid #151c2d;
+      z-index: 6;
     }
 
     .avatar.bounce {
@@ -712,10 +737,10 @@
     }
 
     @keyframes avatarBounce {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      35% { transform: translate(-50%, -70%) scale(1.05); }
-      60% { transform: translate(-50%, -48%) scale(.98); }
-      100% { transform: translate(-50%, -50%) scale(1); }
+      0% { transform: translate(-50%, -100%) scale(1); }
+      35% { transform: translate(-50%, -118%) scale(1.04); }
+      60% { transform: translate(-50%, -97%) scale(.98); }
+      100% { transform: translate(-50%, -100%) scale(1); }
     }
 
     .level-chip {
@@ -853,6 +878,28 @@
     }
 
     .speaker-panel.open { display: block; }
+
+    .panel-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .panel-sprite {
+      width: 54px;
+      height: 54px;
+      padding: 8px;
+      border: 3px solid #121826;
+      border-bottom-width: 5px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff8df, #ffe28a);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      object-fit: contain;
+      box-shadow: 0 8px 0 rgba(18,24,38,0.08), 0 14px 24px rgba(18,24,38,0.12);
+    }
 
     .panel-eyebrow {
       display: inline-flex;
@@ -1017,6 +1064,7 @@
       .meta-row { grid-template-columns: 1fr; }
       .mini-help { font-size: 12px; }
       .progress-dots { width: 100%; justify-content: center; }
+      .panel-sprite { width: 48px; height: 48px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1027,5 +1075,9 @@
         animation-iteration-count: 1 !important;
         scroll-behavior: auto !important;
         transition-duration: .01ms !important;
+      }
+
+      .map-sprite.is-animated {
+        display: none;
       }
     }
